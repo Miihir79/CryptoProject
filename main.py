@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import datetime
 
 # your api here
-API_KEY = "118DB0CD-105C-4F12-9532-81A626E6A16C"
+API_KEY = "your api key"
 
 
 def supportedCurrencies():
