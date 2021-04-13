@@ -1,10 +1,49 @@
+import pandas
 import requests
 import pandas as pd
 import matplotlib.pyplot as plt
 import datetime
 
 # your api here
-API_KEY = "your api key"
+API_KEY = "118DB0CD-105C-4F12-9532-81A626E6A16C"
+
+
+def supportedCurrencies():
+    url = f'https://api.coingecko.com/api/v3/coins'
+    responseCrypto = requests.get(url)
+    data = responseCrypto.json()
+
+    cryptoNames = []
+
+    for assets in data:
+        cryptoNames.append(assets['id'])
+
+    return cryptoNames
+
+
+def cryptoChart(cryptoList, coinName='bitcoin', currencyToCheck='inr', daysToTrack='30', interval='daily'):
+    if coinName in cryptoList:
+        url = f'https://api.coingecko.com/api/v3/coins/{coinName}/market_chart'
+        payload = {'vs_currency': currencyToCheck, 'days': daysToTrack, 'interval': interval}
+        resource = requests.get(url, payload)
+        data = resource.json()
+
+        timeStampList, priceList = [], []
+
+        for price in data['prices']:
+            timeStampList.append(datetime.datetime.fromtimestamp(price[0] / 1000))
+            priceList.append(price[1])
+
+        raw_data_map = {
+            'timestamp': timeStampList,
+            'price': priceList
+        }
+
+        df = pandas.DataFrame(raw_data_map)
+        return df
+    else:
+        print('The crypto you entered is not supported check out our supported crypto list:')
+        print(cryptoList)
 
 
 def getYearlyrates(amount, currency, converted_currency, days):
@@ -97,20 +136,38 @@ while want_to_continu == 1:
 
     elif whatToDO == 2:
 
-        invert_checker = int(input(' Enter What has to be done \n1-> Crypto -> Currency \n2-> Currency -> Crypto'))
-        Crypto = input('Enter the crypto currency abbreviation:')
-        currency_entered = input('Enter the currency abbreviation:')
+        invert_checker = int(input(
+            ' Enter What has to be done \n1-> Crypto -> Currency \n2-> Currency -> Crypto \n3-> Track Crypto changes'))
 
         if invert_checker == 1:
+            Crypto = input('Enter the crypto currency abbreviation:')
+            currency_entered = input('Enter the currency abbreviation:')
 
             valueToPrint = get_crypto_data(currency_entered, Crypto)
             print(f'\n The current price of 1 {Crypto} is {valueToPrint} in {currency_entered}')
 
         elif invert_checker == 2:
+            Crypto = input('Enter the crypto currency abbreviation:')
+            currency_entered = input('Enter the currency abbreviation:')
 
             valueToPrint = get_crypto_data(currency_entered, Crypto, 'false')
             print(f'\n The current price of 1 {currency_entered} is {valueToPrint} in {Crypto}')
-            
+
+        elif invert_checker == 3:
+
+            cryptoOptionsAvailable = supportedCurrencies()
+            print('here are the list of currencies that you can track:', cryptoOptionsAvailable)
+            Crypto = input('Enter the crypto currency abbreviation:')
+            currency_entered = input('Enter the currency abbreviation:')
+            daysTocheck = input('Enter the days to be checked (enter max for all data):')
+            printThisPlease = cryptoChart(cryptoOptionsAvailable, Crypto, currency_entered, daysTocheck)
+            print(printThisPlease)
+            printThisPlease.plot(y='price', x='timestamp')
+            plt.ylabel(f'{Crypto} to {currency_entered}')
+            plt.xlabel('Days')
+            plt.title(f'exchange graph for {Crypto} to {currency_entered}')
+            plt.show()
+
         else:
             print('\nEnter a valid response')
 
