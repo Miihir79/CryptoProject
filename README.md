@@ -4,3 +4,4 @@ Not ony gives a list of all the crypto prices available in the api but also all 
   * currency -> Crypto
   * Currency -> currency conversion
   * price tracking of different currencies over given time (max-1year)
+  * price tracking for selected crypto currencies
