@@ -3,9 +3,68 @@ import requests
 import pandas as pd
 import matplotlib.pyplot as plt
 import datetime
+import smtplib
 
 # your api here
 API_KEY = "118DB0CD-105C-4F12-9532-81A626E6A16C"
+
+API_Nomics = "2af9f98be2ae17bbc98f81128c077655"
+
+
+def getCryptoRates(currencyName='INR', assets='BTC,ETH,XRP'):
+    url = 'https://api.nomics.com/v1/currencies/ticker'
+
+    payload = {'key': API_Nomics, 'convert': currencyName, 'ids': assets, 'interval': '1d'}
+
+    response = requests.get(url, params=payload)
+    data = response.json()
+
+    crypto, price, time = [], [], []
+
+    for asset in data:
+        crypto.append(asset['currency'])
+        price.append(asset['price'])
+        time.append(asset['price_timestamp'])
+
+    raw_data = {
+        'assets': crypto,
+        'rates': price,
+        'timestamp': time
+    }
+
+    df_cryptoRates = pd.DataFrame(raw_data)
+    return df_cryptoRates
+
+
+def setAlert(dataframe, asset, alert_price):
+    user_email_func = input('Enter email where you want to be prompted:')
+    cryptoValue = float(dataframe[dataframe['assets'] == asset]['rates'].item())
+
+    price_info = f'{asset} : {cryptoValue}, Target: {alert_price}'
+
+    if cryptoValue >= alert_price:
+        print(price_info + '<< Target value reached')
+
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.ehlo()
+        server.starttls()
+        server.ehlo()
+        print(user_email_func)
+        server.login('mihirrshah02@gmail.com', 'ygjcrdbiahryuylb')
+
+        subject_mail = f'Target value of {asset} has been achieved'
+
+        body_mail = price_info
+        msg = f"Subject: {subject_mail}\n\n{body_mail}"
+
+        server.sendmail('mihirrshah02@gmail.com', user_email_func, msg)
+
+        print('Hey the email has been sent')
+
+        server.quit()
+
+    else:
+        print(price_info)
 
 
 def supportedCurrencies():
@@ -21,9 +80,9 @@ def supportedCurrencies():
     return cryptoNames
 
 
-def cryptoChart(cryptoList, coinName='bitcoin', currencyToCheck='inr', daysToTrack='30', interval='daily'):
-    if coinName in cryptoList:
-        url = f'https://api.coingecko.com/api/v3/coins/{coinName}/market_chart'
+def cryptoChart(cryptoList, coinName_chart='bitcoin', currencyToCheck='inr', daysToTrack='30', interval='daily'):
+    if coinName_chart in cryptoList:
+        url = f'https://api.coingecko.com/api/v3/coins/{coinName_chart}/market_chart'
         payload = {'vs_currency': currencyToCheck, 'days': daysToTrack, 'interval': interval}
         resource = requests.get(url, payload)
         data = resource.json()
@@ -39,8 +98,8 @@ def cryptoChart(cryptoList, coinName='bitcoin', currencyToCheck='inr', daysToTra
             'price': priceList
         }
 
-        df = pandas.DataFrame(raw_data_map)
-        return df
+        df_chart = pandas.DataFrame(raw_data_map)
+        return df_chart
     else:
         print('The crypto you entered is not supported check out our supported crypto list:')
         print(cryptoList)
@@ -61,10 +120,10 @@ def getYearlyrates(amount, currency, converted_currency, days):
 
     for item in data['rates']:
         current_date = item
-        currecy_rate = data['rates'][item][converted_currency]
+        currency_rate = data['rates'][item][converted_currency]
 
-        currency_hist[current_date] = [currecy_rate]
-        rates_history.append(currecy_rate)
+        currency_hist[current_date] = [currency_rate]
+        rates_history.append(currency_rate)
 
     pd_data = pd.DataFrame(currency_hist).transpose()
     pd_data.columns = ['Rate']
@@ -97,18 +156,18 @@ def get_crypto_data(currencyFun="USD", crypto="BTC", invert='true'):
         'assets': assets_names,
         'rates': assets_rates
     }
-    df = pd.DataFrame(raw_data)
+    df_coin = pd.DataFrame(raw_data)
     pd.set_option('display.max_rows', None)
 
-    value = df.loc[df.assets == crypto, 'rates'].tolist()[0]
-    print(df)
+    value = df_coin.loc[df_coin.assets == crypto, 'rates'].tolist()[0]
+    print(df_coin)
     return value
 
 
 # Execution starts here
 
-want_to_continu = 1
-while want_to_continu == 1:
+want_to_continue = 1
+while want_to_continue == 1:
     whatToDO = int(
         input('\nPlease Enter digit for what you want to do: \n 1->Currency Conversions \n 2->Crypto Price track \n '
               '3->Exit'))
@@ -137,7 +196,8 @@ while want_to_continu == 1:
     elif whatToDO == 2:
 
         invert_checker = int(input(
-            ' Enter What has to be done \n1-> Crypto -> Currency \n2-> Currency -> Crypto \n3-> Track Crypto changes'))
+            'Enter What has to be done \n1-> Crypto -> Currency \n2-> Currency -> Crypto \n3-> Track Crypto changes '
+            '\n4-> Set alerts'))
 
         if invert_checker == 1:
             Crypto = input('Enter the crypto currency abbreviation:')
@@ -157,8 +217,8 @@ while want_to_continu == 1:
 
             cryptoOptionsAvailable = supportedCurrencies()
             print('here are the list of currencies that you can track:', cryptoOptionsAvailable)
-            Crypto = input('Enter the crypto currency abbreviation:')
-            currency_entered = input('Enter the currency abbreviation:')
+            Crypto = input('Enter the crypto currency (type them same as shown above):')
+            currency_entered = input('Enter the currency abbreviation (in small):')
             daysTocheck = input('Enter the days to be checked (enter max for all data):')
             printThisPlease = cryptoChart(cryptoOptionsAvailable, Crypto, currency_entered, daysTocheck)
             print(printThisPlease)
@@ -167,6 +227,13 @@ while want_to_continu == 1:
             plt.xlabel('Days')
             plt.title(f'exchange graph for {Crypto} to {currency_entered}')
             plt.show()
+
+        elif invert_checker == 4:
+            coinName = input('Enter the crypto abbreviation you want to set alert for:')
+            currencyNameEntered = input('Enter the currency abbreviation you  want to check:')
+            alertPrice = float(input('Enter the price above which you want to be alerted:'))
+            df = getCryptoRates(currencyNameEntered, assets=coinName)
+            setAlert(df, coinName, alertPrice)
 
         else:
             print('\nEnter a valid response')
