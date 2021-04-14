@@ -8,7 +8,7 @@ import smtplib
 # your api here
 API_KEY = "your api key"
 
-API_Nomics = "2af9f98be2ae17bbc98f81128c077655"
+API_Nomics = "your api here"
 
 
 def getCryptoRates(currencyName='INR', assets='BTC,ETH,XRP'):
@@ -50,14 +50,14 @@ def setAlert(dataframe, asset, alert_price):
         server.starttls()
         server.ehlo()
         print(user_email_func)
-        server.login('mihirrshah02@gmail.com', 'ygjcrdbiahryuylb')
+        server.login('your mail id', 'password for windows app here')
 
         subject_mail = f'Target value of {asset} has been achieved'
 
         body_mail = price_info
         msg = f"Subject: {subject_mail}\n\n{body_mail}"
 
-        server.sendmail('mihirrshah02@gmail.com', user_email_func, msg)
+        server.sendmail('your mail id', user_email_func, msg)
 
         print('Hey the email has been sent')
 
