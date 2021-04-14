@@ -6,7 +6,7 @@ import datetime
 import smtplib
 
 # your api here
-API_KEY = "118DB0CD-105C-4F12-9532-81A626E6A16C"
+API_KEY = "your api key"
 
 API_Nomics = "2af9f98be2ae17bbc98f81128c077655"
 
